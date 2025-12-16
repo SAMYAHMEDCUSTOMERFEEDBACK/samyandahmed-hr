@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SAMY&AHMED HR | النظام الإداري</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: { 500:'#1F2937', 600:'#000000', accent:'#C5A059' },
+                    },
+                    fontFamily: { sans: ['Tajawal', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F3F4F6; color: #111827; -webkit-tap-highlight-color: transparent; }
+        * { transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: white; z-index: 50; transition: transform 0.25s ease-out; box-shadow: 4px 0 15px rgba(0,0,0,0.05); }
+        .sidebar-closed { transform: translateX(100%); }
+        body.menu-open { overflow: hidden; height: 100vh; position: fixed; width: 100%; }
+
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.2s; backdrop-filter: blur(4px); }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-card { background: white; width: 90%; max-width: 400px; border-radius: 24px; padding: 30px; transform: scale(0.95); transition: transform 0.2s; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-overlay.active .modal-card { transform: scale(1); }
+
+        /* Inputs */
+        .std-input { width: 100%; padding: 14px; border: 1px solid #E5E7EB; border-radius: 14px; outline: none; text-align: center; font-weight: bold; margin-bottom: 12px; background: #F9FAFB; font-size: 0.95rem; }
+        .std-input:focus { border-color: #000; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+        .attendance-input { font-size: 2.8rem; font-weight: 800; text-align: center; width: 100%; outline: none; background: transparent; letter-spacing: 2px; }
+
+        /* Toast */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: #000; color: white; padding: 12px 35px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.2s, top 0.2s; display: flex; align-items: center; gap: 10px; }
+        #toast-container.show { opacity: 1; top: 40px; }
+
+        /* SweetAlert Dark Theme */
+        div:where(.swal2-container) div:where(.swal2-popup) { background: #000 !important; border: 1px solid #333 !important; border-radius: 24px !important; padding: 2rem !important; }
+        div:where(.swal2-container) .swal2-title { color: #fff !important; font-family: 'Tajawal'; }
+        div:where(.swal2-container) .swal2-html-container { color: #aaa !important; }
+        .swal2-icon { animation: none !important; border-color: #C5A059 !important; color: #C5A059 !important; }
+        .action-btn-gray { background-color: #1F2937; color: white; border: 1px solid #374151; transition: 0.2s; }
+        .action-btn-gray:active { transform: scale(0.97); background: #000; }
+        
+        .swal-lux-input {
+            background: #1F2937; border: 1px solid #374151; color: white;
+            text-align: center; padding: 12px; border-radius: 12px; width: 85%; margin: 8px auto; display: block; outline: none; font-family: 'Tajawal';
+        }
+
+        /* Main Content Layout */
+        .main-content {
+            min-height: 100vh;
+            padding: 1.5rem;
+            transition: margin-right 0.25s ease-out;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .page-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1; /* Allow content to grow */
+        }
+
+        @media (min-width: 1024px) {
+            .sidebar-closed { transform: translateX(0) !important; }
+            .main-content { margin-right: 260px; width: calc(100% - 260px); }
+        }
+        
+        /* Table Layout */
+        .table-responsive { width: 100%; overflow-x: auto; border-radius: 1rem; border: 1px solid #E5E7EB; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { text-align: right; padding: 1rem; white-space: nowrap; }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 overflow-x-hidden selection:bg-black selection:text-white">
+
+    <div id="toast-container"><i id="toast-icon" class="fas fa-check-circle text-white"></i> <span id="toast-msg">تم بنجاح</span></div>
+
+    <!-- HEADER -->
+    <header class="lg:hidden bg-white/95 backdrop-blur shadow-sm px-5 py-3 flex items-center justify-between fixed top-0 w-full z-40 h-16 border-b border-gray-100">
+        <h1 class="font-extrabold text-gray-900 text-xl flex items-center gap-2 tracking-tight">SAMY & AHMED</h1>
+        <button id="headerBtn" onclick="handleHeaderBtn()" class="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold shadow hover:bg-gray-800 transition">تسجيل دخول</button>
+    </header>
+
+    <!-- SIDEBAR -->
+    <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden backdrop-blur-sm"></div>
+    <aside id="sidebar" class="sidebar fixed top-0 right-0 h-full sidebar-closed lg:translate-x-0 lg:static flex flex-col">
+        <div class="p-10 text-center border-b border-gray-50">
+            <div class="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-xl"><i class="fas fa-cut"></i></div>
+            <h2 class="font-extrabold text-xl tracking-wide">SAMY & AHMED</h2>
+            <p class="text-[10px] text-gray-400 mt-1 font-bold tracking-[0.2em] uppercase">Salon System</p>
+        </div>
+        <nav class="p-4 space-y-2 flex-grow overflow-y-auto">
+            <div onclick="switchTab('dashboard')" class="p-3.5 rounded-xl hover:bg-gray-50 cursor-pointer flex items-center gap-4 font-bold text-gray-700 text-sm transition group"><span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:text-black transition"><i class="fas fa-clock"></i></span> الرئيسية</div>
+            <div onclick="switchTab('finance')" class="p-3.5 rounded-xl hover:bg-gray-50 cursor-pointer flex items-center gap-4 font-bold text-gray-700 text-sm transition group"><span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:text-black transition"><i class="fas fa-wallet"></i></span> الماليات</div>
+            <div onclick="switchTab('movements')" class="p-3.5 rounded-xl hover:bg-gray-50 cursor-pointer flex items-center gap-4 font-bold text-gray-700 text-sm transition group"><span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:text-black transition"><i class="fas fa-history"></i></span> سجل التحركات</div>
+            <div onclick="switchTab('reports')" class="p-3.5 rounded-xl hover:bg-gray-50 cursor-pointer flex items-center gap-4 font-bold text-gray-700 text-sm transition group"><span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:text-black transition"><i class="fas fa-file-invoice"></i></span> الرواتب</div>
+            <div onclick="switchTab('employees')" class="p-3.5 rounded-xl hover:bg-gray-50 cursor-pointer flex items-center gap-4 font-bold text-gray-700 text-sm transition group"><span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:text-black transition"><i class="fas fa-users"></i></span> الموظفين</div>
+            <div onclick="switchTab('settings')" class="p-3.5 rounded-xl hover:bg-gray-50 cursor-pointer flex items-center gap-4 font-bold text-gray-700 text-sm transition group"><span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:text-black transition"><i class="fas fa-cog"></i></span> الإعدادات</div>
+        </nav>
+        <div class="p-5 border-t border-gray-50 text-center">
+            <button onclick="logout()" class="text-red-500 font-bold text-sm w-full py-3 hover:bg-red-50 rounded-xl transition flex items-center justify-center gap-2"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</button>
+        </div>
+    </aside>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-card text-center">
+            <div class="w-16 h-16 bg-black text-white rounded-full mx-auto mb-5 flex items-center justify-center text-3xl shadow-xl"><i class="fas fa-user-lock"></i></div>
+            <h3 class="font-bold text-xl mb-6 text-gray-900">دخول الإدارة</h3>
+            <input type="text" id="loginUser" class="std-input" placeholder="اسم المستخدم">
+            <input type="password" id="loginPass" class="std-input" placeholder="كلمة المرور">
+            <button onclick="performLogin()" class="w-full bg-black text-white py-4 rounded-xl font-bold mt-4 hover:bg-gray-900 shadow-lg transition transform active:scale-95">دخول</button>
+            <button onclick="toggleLogin()" class="mt-4 text-xs text-gray-400 font-bold hover:text-gray-600">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- EMPLOYEE MODAL -->
+    <div id="empModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="font-bold text-xl mb-6 text-center border-b pb-4">بيانات الموظف</h3>
+            <input id="empName" class="std-input" placeholder="الاسم ثلاثي">
+            <select id="empJob" class="std-input bg-white cursor-pointer"><option value="مصفف شعر">مصفف شعر</option><option value="مساعد">مساعد</option><option value="كاشير">كاشير</option><option value="مدير">مدير</option></select>
+            <div class="flex gap-3"><input id="empCode" type="number" class="std-input" placeholder="الكود"><input id="empSalary" type="number" class="std-input" placeholder="الراتب"></div>
+            <div class="flex gap-3"><input id="empComm" type="number" class="std-input" placeholder="النسبة %"><input id="empVac" type="number" class="std-input" placeholder="رصيد الإجازات"></div>
+            <button onclick="saveEmployee()" class="w-full bg-black text-white py-3 rounded-xl font-bold mt-2 shadow-lg">حفظ البيانات</button>
+            <button onclick="document.getElementById('empModal').classList.remove('active')" class="w-full mt-3 text-xs text-gray-500 font-bold">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="main-content pt-20 lg:pt-0 flex flex-col items-center">
+        
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="tab-content page-container w-full h-full flex flex-col items-center justify-center pt-10 flex-grow max-w-4xl">
+            <div id="adminMsgBar" class="w-full max-w-lg mb-8 hidden bg-gray-900 text-white p-5 rounded-2xl border-r-4 border-yellow-500 flex items-center gap-4 shadow-xl transform hover:scale-[1.01] transition">
+                <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center"><i class="fas fa-bullhorn text-yellow-400"></i></div>
+                <p id="adminMsgText" class="text-sm font-bold leading-relaxed">...</p>
+            </div>
+
+            <div class="text-center mb-10">
+                <div class="text-gray-400 text-lg font-bold mb-2 tracking-widest" id="liveDate">...</div>
+                <div class="inline-flex items-baseline gap-3 text-black" style="font-family: monospace;">
+                    <span class="text-7xl font-bold tracking-tighter" id="liveClock">00:00:00</span>
+                    <span class="text-2xl font-bold text-gray-300" id="liveAmPm">--</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full max-w-md text-center mb-10">
+                <label class="block text-gray-400 text-xs font-bold mb-4 uppercase tracking-widest">أدخل الكود الوظيفي</label>
+                <input type="number" id="codeInput" class="attendance-input" placeholder="" autocomplete="off" autofocus>
+                <button onclick="handleAttendance()" class="w-full bg-black text-white py-4 rounded-2xl font-bold mt-8 shadow-xl active:scale-95 transition flex items-center justify-center gap-2 text-lg"><span>تسجيل الحضور</span> <i class="fas fa-fingerprint"></i></button>
+            </div>
+
+            <div class="flex gap-4 w-full max-w-md">
+                <div class="flex-1 bg-white p-5 rounded-2xl shadow-sm border-b-4 border-green-500 text-center"><div class="text-4xl font-bold text-gray-900" id="presentCount">٠</div><div class="text-xs text-green-600 font-bold mt-2">حضور حالي</div></div>
+                <div class="flex-1 bg-white p-5 rounded-2xl shadow-sm border-b-4 border-yellow-500 text-center"><div class="text-4xl font-bold text-gray-900" id="breakCount">٠</div><div class="text-xs text-yellow-600 font-bold mt-2">في استراحة</div></div>
+            </div>
+        </section>
+
+        <!-- FINANCE -->
+        <section id="finance" class="tab-content hidden page-container w-full max-w-5xl pt-6">
+            <div class="bg-white p-8 rounded-3xl shadow-sm mb-6 w-full">
+                <h2 class="text-2xl font-bold mb-8 border-b border-gray-100 pb-4 text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-wallet text-gold-500"></i> إدارة الماليات
+                </h2>
+                
+                <!-- Input Section (Top) -->
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="md:col-span-1">
+                            <label class="text-xs font-bold text-gray-400 mb-2 block">الموظف</label>
+                            <select id="finEmpSelect" onchange="showEmpFinance()" class="std-input bg-white cursor-pointer h-12 mb-0"><option value="">اختر موظف</option></select>
+                        </div>
+                        <div class="md:col-span-1">
+                            <label class="text-xs font-bold text-gray-400 mb-2 block">نوع العملية</label>
+                            <select id="finType" onchange="toggleAmount()" class="std-input bg-white cursor-pointer h-12 mb-0">
+                                <option value="revenue">💰 تسجيل إيراد</option>
+                                <option value="vacation">🏖️ إجازة (رصيد)</option>
+                                <option value="loan">💸 سلفة نقدية</option>
+                                <option value="ded_money">⚠️ خصم مبلغ</option>
+                                <option value="ded_q">⚠️ خصم ربع يوم</option>
+                                <option value="ded_h">⚠️ خصم نص يوم</option>
+                                <option value="ded_f">⛔ غياب يوم كامل</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1">
+                            <label class="text-xs font-bold text-gray-400 mb-2 block">القيمة</label>
+                            <input id="finAmount" type="number" class="std-input h-12 mb-0" placeholder="المبلغ (ج.م)">
+                        </div>
+                        <div class="md:col-span-1">
+                            <button onclick="addTransaction()" class="w-full bg-black text-white h-12 rounded-xl font-bold shadow-lg hover:bg-gray-900 transition flex items-center justify-center gap-2">
+                                <i class="fas fa-save"></i> حفظ العملية
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Section (Bottom) -->
+                <div class="border border-gray-100 rounded-2xl overflow-hidden">
+                    <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
+                        <div class="font-bold text-lg flex items-center gap-2"><i class="fas fa-user-circle"></i> <span id="finName">اختر موظف</span></div>
+                        <div class="text-sm font-medium opacity-90">
+                            الصافي: <span id="finTotal" class="font-bold text-yellow-400 text-lg mx-1">0.00</span> | 
+                            إجازات: <span id="finVacBal" class="font-bold">0</span>
+                        </div>
+                    </div>
+                    <div class="overflow-y-auto max-h-96 bg-white">
+                        <table class="w-full text-right text-sm">
+                            <thead class="bg-gray-50 text-gray-500 sticky top-0">
+                                <tr><th class="p-4">التاريخ</th><th class="p-4">النوع</th><th class="p-4">القيمة</th><th class="p-4 text-center">حذف</th></tr>
+                            </thead>
+                            <tbody id="finTable" class="divide-y divide-gray-50">
+                                <tr><td colspan="4" class="p-8 text-center text-gray-400">لا توجد بيانات</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MOVEMENTS -->
+        <section id="movements" class="tab-content hidden page-container w-full max-w-7xl pt-6">
+            <div class="bg-white p-8 rounded-3xl shadow-sm min-h-[600px] w-full">
+                <!-- Header with Centered Excel Button -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <h2 class="font-bold text-2xl text-gray-800 w-full md:w-auto text-right">سجل التحركات</h2>
+                    
+                    <button onclick="exportMovementsExcel()" class="bg-green-600 text-white px-8 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition flex items-center justify-center gap-2 transform hover:scale-105 md:mx-auto">
+                        <i class="fas fa-file-excel text-lg"></i> <span>تصدير Excel</span>
+                    </button>
+
+                    <div class="flex gap-2 w-full md:w-auto justify-center">
+                        <input type="month" id="moveMonth" class="bg-gray-50 border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-black transition">
+                        <button onclick="calcMovements()" class="bg-black text-white px-6 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-gray-800">عرض</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive rounded-xl border border-gray-100">
+                    <table class="w-full text-right bg-white text-sm whitespace-nowrap min-w-full" id="moveTable">
+                        <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase">
+                            <tr>
+                                <th class="p-4">التاريخ</th>
+                                <th class="p-4">الموظف</th>
+                                <th class="p-4">حضور/انصراف</th>
+                                <th class="p-4 text-yellow-600">بريك</th>
+                                <th class="p-4 text-green-600">صلاة</th>
+                                <th class="p-4 text-blue-600">إذن</th>
+                                <th class="p-4 text-gray-500">فرع آخر</th>
+                            </tr>
+                        </thead>
+                        <tbody id="moveTableBody" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- REPORTS -->
+        <section id="reports" class="tab-content hidden page-container w-full max-w-7xl pt-6">
+            <div class="bg-white p-8 rounded-3xl shadow-sm min-h-[600px] w-full">
+                <!-- Header with Centered Excel Button -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <h2 class="font-bold text-2xl text-gray-800 w-full md:w-auto text-right">تقرير الرواتب</h2>
+                    
+                    <button onclick="exportExcel()" class="bg-green-600 text-white px-8 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition flex items-center justify-center gap-2 transform hover:scale-105 md:mx-auto">
+                        <i class="fas fa-file-excel text-lg"></i> <span>تصدير Excel</span>
+                    </button>
+
+                    <div class="flex gap-2 w-full md:w-auto justify-center">
+                        <input type="month" id="reportMonth" class="bg-gray-50 border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-black transition">
+                        <button onclick="calcReports()" class="bg-black text-white px-6 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-gray-800">عرض</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive rounded-2xl border border-gray-100">
+                    <table class="w-full text-right bg-white text-base min-w-[900px]" id="salaryTable">
+                        <thead class="bg-gray-900 text-white text-sm font-bold">
+                            <tr>
+                                <th class="p-4 whitespace-nowrap">الموظف</th>
+                                <th class="p-4 whitespace-nowrap">الأساسي</th>
+                                <th class="p-4 whitespace-nowrap text-green-400">إضافي وعمولات</th>
+                                <th class="p-4 whitespace-nowrap text-red-300">تأخيرات</th>
+                                <th class="p-4 whitespace-nowrap text-red-300">خصومات/سلف</th>
+                                <th class="p-4 whitespace-nowrap bg-gray-800">الصافي</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportBody" class="divide-y divide-gray-100 font-medium text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- EMPLOYEES -->
+        <section id="employees" class="tab-content hidden page-container w-full max-w-5xl pt-6">
+            <div class="bg-white p-8 rounded-3xl shadow-sm min-h-[600px] w-full">
+                <div class="flex justify-between items-center mb-8"><h2 class="font-bold text-2xl text-gray-800">قائمة الموظفين</h2><button onclick="openEmpModal()" class="bg-black text-white px-6 py-3 rounded-xl font-bold text-xs shadow-lg hover:bg-gray-800 transition flex items-center gap-2"><i class="fas fa-plus"></i> موظف جديد</button></div>
+                <div class="table-responsive rounded-2xl border border-gray-100"><table class="w-full text-right text-sm min-w-full"><thead class="bg-gray-50 text-gray-500 uppercase text-xs"><tr><th class="p-4">ID</th><th class="p-4">الاسم</th><th class="p-4">الوظيفة</th><th class="p-4">الراتب</th><th class="p-4">رصيد</th><th class="p-4">نسبة</th><th class="p-4 text-center">تحكم</th></tr></thead><tbody id="empTable" class="divide-y divide-gray-50"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="settings" class="tab-content hidden w-full max-w-xl mx-auto pt-6">
+            <div class="bg-white p-8 rounded-3xl shadow-sm mb-4">
+                <h3 class="font-bold border-b border-gray-100 pb-4 mb-4 text-lg">رسالة للموظفين</h3>
+                <textarea id="adminMsgIn" class="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-black transition bg-gray-50" rows="3" placeholder="اكتب التنبيه هنا..."></textarea>
+                <div class="flex gap-3 mt-4 items-center">
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 flex items-center gap-2"><input type="number" id="msgDur" class="w-10 bg-transparent text-center font-bold outline-none" value="60"><span class="text-xs text-gray-500 font-bold">دقيقة</span></div>
+                    <button onclick="saveMsg()" class="bg-black text-white px-6 py-2 rounded-xl font-bold text-sm flex-grow shadow-md hover:bg-gray-900 transition">نشر الرسالة</button>
+                </div>
+            </div>
+            
+            <div class="bg-white p-8 rounded-3xl shadow-sm mb-4">
+                <h3 class="font-bold border-b border-gray-100 pb-4 mb-4 text-lg">الأمان والنظام</h3>
+                <div class="space-y-4">
+                    <button onclick="changePassModal()" class="w-full bg-gray-900 text-white py-4 rounded-xl text-sm font-bold hover:bg-black transition shadow-md flex justify-between px-6"><span>تغيير كلمة المرور</span> <i class="fas fa-lock"></i></button>
+                    <div><label class="text-xs font-bold text-gray-400">بداية الوردية (نظام 24 ساعة)</label><div class="flex gap-2"><input type="number" id="shiftStartInput" class="std-input mt-1" placeholder="مثال: 13"><button onclick="saveShift()" class="w-1/3 bg-gray-800 text-white rounded-xl text-sm font-bold mt-1">حفظ</button></div></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-sm mb-4">
+                <h3 class="font-bold border-b border-gray-100 pb-4 mb-4 text-lg">إدارة البيانات</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="backupData()" class="p-4 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-100 transition shadow-sm border border-blue-100 flex flex-col items-center gap-2"><i class="fas fa-download text-xl"></i> تحميل نسخة</button>
+                     <label class="p-4 bg-green-50 text-green-600 rounded-xl font-bold text-sm hover:bg-green-100 transition shadow-sm border border-green-100 flex flex-col items-center gap-2 cursor-pointer">
+                        <input type="file" onchange="restoreData(this)" class="hidden"><i class="fas fa-upload text-xl"></i> استعادة
+                    </label>
+                </div>
+                <div class="text-center pt-6">
+                    <button onclick="resetSys()" class="text-red-500 font-bold text-xs hover:text-red-700 hover:bg-red-50 px-6 py-3 rounded-xl transition border border-red-100">⚠ حذف جميع البيانات (Factory Reset)</button>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="mt-8 py-4 text-center text-xs text-gray-400 font-bold tracking-widest uppercase pb-12">
+                Developed By Mustafa Zuhair
+            </footer>
+        </section>
+
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        let adminPIN=localStorage.getItem('sa_pin')||'241120', employees=JSON.parse(localStorage.getItem('sa_emps'))||[], logs=JSON.parse(localStorage.getItem('sa_logs'))||[], finance=JSON.parse(localStorage.getItem('sa_fin'))||[], isLoggedIn=sessionStorage.getItem('sa_session')==='true', editId=null;
+        let shiftStart = parseInt(localStorage.getItem('sa_shift')) || 13; 
+        const RULES = { breakLimit: 30, prayLimit: 15, late15: 0.25, late60: 0.50, late120: 1.00 };
+        const toArabic = n => (n+'').replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+
+        function startClock() {
+            const update = () => {
+                const d=new Date(); let h=d.getHours(), m=d.getMinutes(), s=d.getSeconds(); const ampm=h>=12?'م':'ص'; h=h%12;h=h?h:12;
+                document.getElementById('liveClock').innerText=`${toArabic(h)}:${toArabic(m.toString().padStart(2,'0'))}:${toArabic(s.toString().padStart(2,'0'))}`;
+                document.getElementById('liveAmPm').innerText=ampm;
+                document.getElementById('liveDate').innerText=`${toArabic(d.getDate())}/${toArabic(d.getMonth()+1)}/${toArabic(d.getFullYear())}`;
+            };
+            update(); setInterval(update, 1000);
+        }
+
+        window.onload=()=>{
+            startClock();
+            const d = new Date().toISOString().slice(0,7);
+            document.getElementById('reportMonth').value=d; document.getElementById('moveMonth').value=d;
+            
+            if(isLoggedIn)document.getElementById('headerBtn').innerText='القائمة';
+            
+            // Fix Message Visibility logic (Direct)
+            const m = localStorage.getItem('sa_msg');
+            if (m) {
+                document.getElementById('adminMsgBar').classList.remove('hidden');
+                document.getElementById('adminMsgText').innerText = m;
+                document.getElementById('adminMsgIn').value = m;
+            }
+            
+            document.getElementById('shiftStartInput').value = shiftStart;
+            document.getElementById('codeInput').addEventListener('keypress',e=>{if(e.key==='Enter')handleAttendance()});
+            document.getElementById('loginPass').addEventListener('keypress',e=>{if(e.key==='Enter')performLogin()});
+            updateStats();
+        };
+
+        function showSwal(title, icon='success') {
+            Swal.fire({
+                title: title, icon: icon, confirmButtonText: 'حسناً', confirmButtonColor: '#C5A059', background: '#000000', color: '#fff',
+                iconColor: icon==='success'?'#10B981':'#EF4444',
+                timer: 1000, showConfirmButton: false
+            });
+        }
+
+        function handleHeaderBtn(){if(isLoggedIn)toggleSidebar();else toggleLogin();}
+        function toggleLogin(){const m=document.getElementById('loginModal');m.classList.toggle('active');if(m.classList.contains('active'))document.getElementById('loginUser').focus();}
+        function performLogin(){
+            const u=document.getElementById('loginUser').value,p=document.getElementById('loginPass').value;
+            if(u==='admin'&&p===adminPIN){
+                isLoggedIn=true;
+                sessionStorage.setItem('sa_session','true');
+                document.getElementById('headerBtn').innerText='القائمة';
+                toggleLogin();
+                showSwal('مرحباً بك', 'success');
+                document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
+            } else {
+                showSwal('بيانات خاطئة', 'error');
+            }
+        }
+        function logout(){isLoggedIn=false;sessionStorage.removeItem('sa_session');document.getElementById('headerBtn').innerText='تسجيل دخول';closeSidebar();switchTab('dashboard');showSwal('تم الخروج');}
+        function toggleSidebar(){const s=document.getElementById('sidebar'),o=document.getElementById('sidebarOverlay');s.classList.toggle('sidebar-closed');o.classList.toggle('hidden');if(document.body.classList.contains('menu-open')){document.body.classList.remove('menu-open')}else{document.body.classList.add('menu-open');}}
+        function closeSidebar(){document.getElementById('sidebar').classList.add('sidebar-closed');document.getElementById('sidebarOverlay').classList.add('hidden');document.body.classList.remove('menu-open');}
+        function switchTab(id){if(id==='dashboard'){isLoggedIn=false;document.getElementById('headerBtn').innerText='تسجيل دخول';closeSidebar();}document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');if(window.innerWidth<1024&&id!=='dashboard')closeSidebar();if(id==='finance')loadFin();if(id==='employees')renderEmps();if(id==='reports')calcReports();if(id==='movements')calcMovements();}
+        function authAdmin(t){if(isLoggedIn)switchTab(t);else toggleLogin();}
+        
+        function updateStats(){
+            let p=0,b=0;
+            employees.forEach(e=>{
+                const l=logs.filter(x=>x.eid===e.id).sort((m,n)=>n.ts.localeCompare(m.ts));
+                if(l.length > 0){
+                    if(l[0].act==='in'&&l[0].type==='shift')p++;
+                    if(l[0].act==='out'&&(l[0].type==='break'||l[0].type==='pray'))b++;
+                }
+            });
+            document.getElementById('presentCount').innerText=toArabic(p);
+            document.getElementById('breakCount').innerText=toArabic(b);
+        }
+        
+        function handleAttendance(){
+            const inp=document.getElementById('codeInput'),code=inp.value.trim();if(!code)return;
+            const emp=employees.find(e=>e.code==code);if(!emp){showSwal('كود غير مسجل','error');inp.value='';return;}
+            const l=logs.filter(x=>x.eid===emp.id).sort((m,n)=>n.ts.localeCompare(m.ts));
+            const last=l[0]; let act='in',type='shift',msg=`أهلاً ${emp.name}`;
+            if(!last||last.act==='out'){if(last&&(last.type==='break'||last.type==='pray'||last.type==='perm'||last.type==='branch')){type=last.type;msg='عودة للعمل';}}
+            else{
+                act='out';
+                Swal.fire({
+                    title: emp.name,
+                    html: `
+                        <div class="grid gap-3 mt-4">
+                            <button onclick="clickAtt('shift')" class="action-btn-gray p-4 rounded-xl font-bold w-full shadow-lg text-lg">انصراف نهائي</button>
+                            <div class="flex gap-2">
+                                <button onclick="clickAtt('break')" class="action-btn-gray p-3 rounded-xl font-bold w-full">بريك</button>
+                                <button onclick="clickAtt('pray')" class="action-btn-gray p-3 rounded-xl font-bold w-full">صلاة</button>
+                            </div>
+                            <button onclick="clickAtt('perm')" class="action-btn-gray p-3 rounded-xl font-bold w-full">إذن</button>
+                            <button onclick="clickAtt('branch')" class="action-btn-gray p-3 rounded-xl font-bold w-full border border-gray-600">الفرع الآخر</button>
+                        </div>
+                    `,
+                    showConfirmButton: false, showCancelButton: true, cancelButtonText: 'إلغاء', cancelButtonColor: '#4B5563', background: '#000000'
+                });
+                window.clickAtt=(t)=>{type=t;msg=t==='shift'?'تم الانصراف':'تم التسجيل';Swal.close();saveLog(emp,act,type,msg);};inp.value='';return;
+            }
+            saveLog(emp,act,type,msg);inp.value='';
+        }
+        function saveLog(e,a,t,m){logs.unshift({id:Date.now(),eid:e.id,name:e.name,act:a,type:t,ts:new Date().toISOString()});localStorage.setItem('sa_logs',JSON.stringify(logs));showSwal(m,'success');updateStats();}
+
+        function calcMovements(){
+            const m=document.getElementById('moveMonth').value,tb=document.getElementById('moveTableBody');tb.innerHTML='';if(!m)return;
+            const ms=logs.filter(l=>l.ts.startsWith(m)).sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+            employees.forEach(emp=>{
+                const el=ms.filter(l=>l.eid===emp.id); let shift=null,last=null; const shifts=[];
+                el.forEach(l=>{
+                    const t=new Date(l.ts);
+                    if(l.act==='in'&&l.type==='shift'){if(shift)shifts.push(shift);shift={date:t.toLocaleDateString('ar-EG'),name:emp.name,s:t,e:null,b:0,p:0,pm:0,br:0};last=null;}
+                    else if(l.act==='out'&&l.type==='shift'){if(shift){shift.e=t;shifts.push(shift);shift=null;}}
+                    else if(shift){if(l.act==='out')last={t:l.type,time:t};else if(l.act==='in'&&last&&last.t===l.type){const d=(t-last.time)/60000;if(l.type==='break')shift.b+=d;if(l.type==='pray')shift.p+=d;if(l.type==='perm')shift.pm+=d;if(l.type==='branch')shift.br+=d;last=null;}}
+                });
+                if(shift)shifts.push(shift);
+                const fmt=(n)=>n>0?(n>60?`${Math.floor(n/60)}س ${Math.floor(n%60)}د`:`${Math.floor(n)}د`):'-';
+                shifts.forEach(s=>{tb.innerHTML+=`<tr class="hover:bg-gray-50 border-b"><td class="p-3 text-gray-500">${toArabic(s.date)}</td><td class="p-3 font-bold">${s.name}</td><td class="p-3 text-xs dir-ltr text-right">${s.s.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${s.e?s.e.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'...'}</td><td class="p-3 text-yellow-600 font-bold">${fmt(s.b)}</td><td class="p-3 text-green-600 font-bold">${fmt(s.p)}</td><td class="p-3 text-blue-600 font-bold">${fmt(s.pm)}</td><td class="p-3 text-gray-500 font-bold">${fmt(s.br)}</td></tr>`;});
+            });
+        }
+        function exportMovementsExcel(){const ws=XLSX.utils.table_to_sheet(document.getElementById('moveTable'));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Movements");XLSX.writeFile(wb,"Movements_Log.xlsx");}
+
+        function calcReports() {
+            const m=document.getElementById('reportMonth').value,tb=document.getElementById('reportBody');tb.innerHTML='';if(!m)return;
+            employees.forEach(emp=>{
+                let ld=0,ot=0,pm=0; const el=logs.filter(l=>l.eid===emp.id&&l.ts.startsWith(m)).sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+                let css=null,lbs=null;
+                el.forEach(log=>{
+                    const lt=new Date(log.ts);
+                    if(log.act==='in'&&log.type==='shift'){css=lt;const rt=new Date(lt);rt.setHours(shiftStart,0,0,0);const dm=(lt-rt)/60000;if(dm>15){if(dm>120)ld+=RULES.late120;else if(dm>60)ld+=RULES.late60;else ld+=RULES.late15;}}
+                    if(log.act==='out'&&(log.type==='break'||log.type==='pray')){lbs={type:log.type,time:lt};}
+                    if(log.act==='in'&&lbs&&lbs.type===log.type){const dur=(lt-lbs.time)/60000,lim=log.type==='break'?RULES.breakLimit:RULES.prayLimit;if(dur>lim){const ex=dur-lim,mr=(emp.salary/30/12/60);pm+=(ex*mr);}lbs=null;}
+                    if(log.act==='out'&&log.type==='shift'&&css){const ee=new Date(css);ee.setHours(ee.getHours()+12);const doT=(lt-ee)/3600000;if(doT>0.5){ot+=(doT*(emp.salary/30/12)*1.5);}css=null;}
+                });
+                const ef=finance.filter(f=>f.eid===emp.id&&f.date.startsWith(m)); let l=0,md=0, comm=0; const dv=emp.salary/30;
+                ef.forEach(f=>{
+                    if(f.type==='loan')l+=f.amount;
+                    else if(f.type==='ded_money')md+=f.amount;
+                    else if(f.type==='ded_q')md+=(dv*0.25);
+                    else if(f.type==='ded_h')md+=(dv*0.5);
+                    else if(f.type==='ded_f')md+=dv;
+                    else if(f.type==='revenue')comm+=(f.amount * (emp.comm/100));
+                });
+                const lc=ld*dv, tp=lc+pm, td=l+md, net=(emp.salary+ot+comm)-(tp+td);
+                tb.innerHTML+=`<tr class="hover:bg-gray-50 border-b"><td class="p-3 font-bold">${emp.name}</td><td class="p-3">${toArabic(emp.salary)}</td><td class="p-3 text-green-600">+${toArabic((ot+comm).toFixed(1))}</td><td class="p-3 text-red-500">-${toArabic(tp.toFixed(1))}</td><td class="p-3 text-red-500">-${toArabic(td.toFixed(1))}</td><td class="p-3 font-bold bg-gray-50">${toArabic(net.toFixed(1))}</td></tr>`;
+            });
+        }
+
+        function openEmpModal(id=null){editId=id;document.getElementById('empModal').classList.add('active');if(id){const e=employees.find(x=>x.id===id);document.getElementById('empName').value=e.name;document.getElementById('empJob').value=e.job;document.getElementById('empCode').value=e.code;document.getElementById('empSalary').value=e.salary;document.getElementById('empComm').value=e.comm;document.getElementById('empVac').value=e.vacBalance||21;}else{document.querySelectorAll('#empModal input').forEach(i=>i.value='');}}
+        function saveEmployee(){const n=document.getElementById('empName').value,j=document.getElementById('empJob').value,c=document.getElementById('empCode').value,s=parseFloat(document.getElementById('empSalary').value)||0,cm=parseFloat(document.getElementById('empComm').value)||0,v=parseInt(document.getElementById('empVac').value)||21;if(!n||!c)return showSwal('بيانات ناقصة','error');if(editId){const i=employees.findIndex(x=>x.id===editId);employees[i]={...employees[i],name:n,job:j,code:c,salary:s,comm:cm,vacBalance:v};}else{employees.push({id:Date.now(),name:n,job:j,code:c,salary:s,comm:cm,vacBalance:v});}localStorage.setItem('sa_emps',JSON.stringify(employees));document.getElementById('empModal').classList.remove('active');renderEmps();showSwal('تم الحفظ','success');}
+        
+        function deleteEmployee(id) {
+            Swal.fire({
+                title: 'حذف الموظف؟', text: "لا يمكن التراجع", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#4B5563', confirmButtonText: 'حذف', cancelButtonText: 'إلغاء', background: '#000000'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    employees = employees.filter(x => x.id !== id);
+                    localStorage.setItem('sa_emps', JSON.stringify(employees)); renderEmps();
+                    showSwal('تم الحذف', 'success');
+                }
+            })
+        }
+        function renderEmps(){document.getElementById('empTable').innerHTML=employees.map(e=>`<tr class="border-b border-gray-50 hover:bg-gray-50"><td class="p-3 text-gray-400">#${toArabic(e.code)}</td><td class="p-3 font-bold">${e.name}</td><td class="p-3 text-xs">${e.job}</td><td class="p-3 font-bold">${toArabic(e.salary)}</td><td class="p-3 text-blue-600 font-bold">${toArabic(e.vacBalance||0)}</td><td class="p-3 text-yellow-600 font-bold">${toArabic(e.comm||0)}%</td><td class="p-3 text-center flex justify-center gap-2"><button onclick="openEmpModal(${e.id})" class="text-blue-500 mx-1"><i class="fas fa-edit"></i></button><button onclick="deleteEmployee(${e.id})" class="text-red-500 mx-1"><i class="fas fa-trash"></i></button></td></tr>`).join('');}
+        
+        function loadFin(){const s=document.getElementById('finEmpSelect');s.innerHTML='<option value="">اختر موظف</option>';employees.forEach(e=>s.innerHTML+=`<option value="${e.id}">${e.name}</option>`);toggleAmount();}
+        function toggleAmount(){const t=document.getElementById('finType').value;document.getElementById('finAmount').style.display=(t==='loan'||t==='ded_money'||t==='revenue')?'block':'none';}
+        function showEmpFinance(){const eid=parseInt(document.getElementById('finEmpSelect').value);if(!eid)return;const emp=employees.find(e=>e.id===eid);const fs=finance.filter(f=>f.eid===eid).sort((a,b)=>new Date(b.date)-new Date(a.date));document.getElementById('finTable').innerHTML=fs.map(f=>{let t='سلفة', v=f.amount;if(f.type.includes('ded_q')) { t='ربع يوم'; v='-'; } else if(f.type.includes('ded_h')) { t='نص يوم'; v='-'; } else if(f.type.includes('ded_f')) { t='يوم كامل'; v='-'; } else if(f.type==='ded_money') t='خصم مالي'; else if(f.type==='revenue') { t='إيراد شغل'; } return `<tr class="border-b"><td class="p-2 text-gray-500">${toArabic(f.date)}</td><td class="p-2 font-bold">${t}</td><td class="p-2 font-bold text-red-500">${toArabic(v)}</td><td class="p-2 text-center"><i onclick="delFin(${f.id})" class="fas fa-times text-gray-300 cursor-pointer hover:text-red-500"></i></td></tr>`;}).join('');document.getElementById('finName').innerText=emp.name;document.getElementById('finTotal').innerText=toArabic(fs.filter(x=>x.type==='loan'||x.type==='ded_money').reduce((a,b)=>a+b.amount,0).toFixed(2)); document.getElementById('finVacBal').innerText=toArabic(emp.vacBalance);}
+        function addTransaction(){const eid=parseInt(document.getElementById('finEmpSelect').value), t=document.getElementById('finType').value; let amt=0; if(!eid)return; if(t==='loan'||t==='ded_money'||t==='revenue'){amt=parseFloat(document.getElementById('finAmount').value);if(!amt)return;} if(t==='vacation'){const i=employees.findIndex(e=>e.id===eid);if(employees[i].vacBalance>0){employees[i].vacBalance-=1;localStorage.setItem('sa_emps',JSON.stringify(employees));}else{return showSwal('رصيد الإجازات لا يكفي','error');}} finance.push({id:Date.now(),eid,type:t,amount:amt,date:new Date().toLocaleDateString('en-CA')});localStorage.setItem('sa_fin',JSON.stringify(finance));showSwal('تم','success');showEmpFinance();}
+        function delFin(id){
+            Swal.fire({
+                title: 'حذف العملية؟', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#4B5563', confirmButtonText: 'نعم', cancelButtonText: 'إلغاء', background: '#000000'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    finance = finance.filter(x => x.id !== id);
+                    localStorage.setItem('sa_fin', JSON.stringify(finance)); showEmpFinance();
+                    showSwal('تم الحذف', 'success');
+                }
+            })
+        }
+        function saveMsg(){
+            const m = document.getElementById('adminMsgIn').value;
+            const min = parseInt(document.getElementById('msgDur').value) || 60; 
+            const expiry = Date.now() + (min * 60 * 1000);
+            
+            localStorage.setItem('sa_msg', m);
+            localStorage.setItem('sa_msg_exp', expiry);
+            
+            document.getElementById('adminMsgText').innerText = m;
+            document.getElementById('adminMsgBar').classList.remove('hidden');
+            showSwal('تم النشر', 'success');
+        }
+
+        function savePass(){const n=document.getElementById('newPass').value;if(n.length>=4){localStorage.setItem('sa_pin',n);adminPIN=n;showSwal('تم التحديث','success');}}
+        function saveShift(){const v=parseInt(document.getElementById('shiftStartInput').value);if(v){shiftStart=v;localStorage.setItem('sa_shift',v);showSwal('تم الحفظ','success');}}
+        
+        function resetSys(){
+            Swal.fire({
+                title: 'حذف جميع البيانات؟', text: "لا يمكن التراجع", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#4B5563', confirmButtonText: 'نعم، فرمتة', cancelButtonText: 'إلغاء', background: '#000000'
+            }).then((result) => {
+                if (result.isConfirmed) { localStorage.clear(); location.reload(); }
+            })
+        }
+        
+        function changePassModal() {
+            Swal.fire({
+                title: 'تغيير كلمة المرور',
+                html: `<input type="password" id="oldPass" class="swal-lux-input" placeholder="القديمة"><input type="password" id="newPassSwal" class="swal-lux-input" placeholder="الجديدة">`,
+                showCancelButton: true, confirmButtonText: 'تحديث', cancelButtonText: 'إلغاء', background: '#000000', confirmButtonColor: '#1F2937', cancelButtonColor: '#4B5563',
+                preConfirm: () => [document.getElementById('oldPass').value, document.getElementById('newPassSwal').value]
+            }).then((res) => {
+                if (res.value) {
+                    if (res.value[0] === adminPIN && res.value[1].length >= 4) {
+                        adminPIN = res.value[1]; localStorage.setItem('sa_pin', adminPIN); showSwal('تم التحديث', 'success');
+                    } else { showSwal('بيانات خاطئة', 'error'); }
+                }
+            });
+        }
+        
+        function exportExcel(){const ws=XLSX.utils.table_to_sheet(document.getElementById('salaryTable'));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Sheet1");XLSX.writeFile(wb,"Report.xlsx");}
+        function backupData() { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({e:employees,l:logs,f:finance,n:notes})],{type:'application/json'})); a.download='Backup.json'; a.click(); }
+        function restoreData(i) { const r=new FileReader(); r.onload=e=>{const d=JSON.parse(e.target.result); employees=d.e; logs=d.l; finance=d.f; localStorage.setItem('sa_emps',JSON.stringify(employees)); localStorage.setItem('sa_logs',JSON.stringify(logs)); localStorage.setItem('sa_fin',JSON.stringify(finance)); location.reload();}; r.readAsText(i.files[0]); }
+    </script>
+</body>
+</html>
+
