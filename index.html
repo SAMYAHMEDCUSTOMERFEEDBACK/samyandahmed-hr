@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SAMY&AHMED HR | النظام الإداري</title>
     
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -41,28 +40,20 @@
         .modal-overlay.active .modal-card { transform: scale(1); }
 
         /* Inputs */
-        .std-input { width: 100%; padding: 14px; border: 1px solid #E5E7EB; border-radius: 14px; outline: none; text-align: center; font-weight: bold; margin-bottom: 12px; background: #F9FAFB; font-size: 0.95rem; }
+        .std-input { width: 100%; padding: 14px; border: 1px solid #E5E7EB; border-radius: 14px; outline: none; text-align: center; font-weight: bold; background: #F9FAFB; font-size: 0.95rem; }
         .std-input:focus { border-color: #000; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
-        .attendance-input { font-size: 2.8rem; font-weight: 800; text-align: center; width: 100%; outline: none; background: transparent; letter-spacing: 2px; }
+        .attendance-input { font-size: 3.5rem; font-weight: 800; text-align: center; width: 100%; outline: none; background: transparent; letter-spacing: 4px; height: 80px; }
 
-        /* Toast */
-        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: #000; color: white; padding: 12px 35px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.2s, top 0.2s; display: flex; align-items: center; gap: 10px; }
-        #toast-container.show { opacity: 1; top: 40px; }
-
-        /* SweetAlert Dark Theme */
+        /* SweetAlert */
         div:where(.swal2-container) div:where(.swal2-popup) { background: #000 !important; border: 1px solid #333 !important; border-radius: 24px !important; padding: 2rem !important; }
         div:where(.swal2-container) .swal2-title { color: #fff !important; font-family: 'Tajawal'; }
         div:where(.swal2-container) .swal2-html-container { color: #aaa !important; }
         .swal2-icon { animation: none !important; border-color: #C5A059 !important; color: #C5A059 !important; }
         .action-btn-gray { background-color: #1F2937; color: white; border: 1px solid #374151; transition: 0.2s; }
         .action-btn-gray:active { transform: scale(0.97); background: #000; }
-        
-        .swal-lux-input {
-            background: #1F2937; border: 1px solid #374151; color: white;
-            text-align: center; padding: 12px; border-radius: 12px; width: 85%; margin: 8px auto; display: block; outline: none; font-family: 'Tajawal';
-        }
+        .swal-lux-input { background: #1F2937; border: 1px solid #374151; color: white; text-align: center; padding: 12px; border-radius: 12px; width: 85%; margin: 8px auto; display: block; outline: none; font-family: 'Tajawal'; }
 
-        /* Main Content Layout */
+        /* Main Layout - FULL WIDTH FIX */
         .main-content {
             min-height: 100vh;
             padding: 1.5rem;
@@ -75,12 +66,12 @@
         
         .page-container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1400px; /* Increased max-width */
             margin: 0 auto;
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex-grow: 1; /* Allow content to grow */
+            flex-grow: 1;
         }
 
         @media (min-width: 1024px) {
@@ -88,7 +79,6 @@
             .main-content { margin-right: 260px; width: calc(100% - 260px); }
         }
         
-        /* Table Layout */
         .table-responsive { width: 100%; overflow-x: auto; border-radius: 1rem; border: 1px solid #E5E7EB; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { text-align: right; padding: 1rem; white-space: nowrap; }
@@ -96,15 +86,11 @@
 </head>
 <body class="min-h-screen bg-gray-50 overflow-x-hidden selection:bg-black selection:text-white">
 
-    <div id="toast-container"><i id="toast-icon" class="fas fa-check-circle text-white"></i> <span id="toast-msg">تم بنجاح</span></div>
-
-    <!-- HEADER -->
     <header class="lg:hidden bg-white/95 backdrop-blur shadow-sm px-5 py-3 flex items-center justify-between fixed top-0 w-full z-40 h-16 border-b border-gray-100">
         <h1 class="font-extrabold text-gray-900 text-xl flex items-center gap-2 tracking-tight">SAMY & AHMED</h1>
         <button id="headerBtn" onclick="handleHeaderBtn()" class="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold shadow hover:bg-gray-800 transition">تسجيل دخول</button>
     </header>
 
-    <!-- SIDEBAR -->
     <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden backdrop-blur-sm"></div>
     <aside id="sidebar" class="sidebar fixed top-0 right-0 h-full sidebar-closed lg:translate-x-0 lg:static flex flex-col">
         <div class="p-10 text-center border-b border-gray-50">
@@ -125,7 +111,6 @@
         </div>
     </aside>
 
-    <!-- LOGIN MODAL -->
     <div id="loginModal" class="modal-overlay">
         <div class="modal-card text-center">
             <div class="w-16 h-16 bg-black text-white rounded-full mx-auto mb-5 flex items-center justify-center text-3xl shadow-xl"><i class="fas fa-user-lock"></i></div>
@@ -137,7 +122,6 @@
         </div>
     </div>
 
-    <!-- EMPLOYEE MODAL -->
     <div id="empModal" class="modal-overlay">
         <div class="modal-card">
             <h3 class="font-bold text-xl mb-6 text-center border-b pb-4">بيانات الموظف</h3>
@@ -150,44 +134,42 @@
         </div>
     </div>
 
-    <!-- CONTENT -->
     <div class="main-content pt-20 lg:pt-0 flex flex-col items-center">
         
-        <!-- DASHBOARD -->
-        <section id="dashboard" class="tab-content page-container w-full h-full flex flex-col items-center justify-center pt-10 flex-grow max-w-4xl">
-            <div id="adminMsgBar" class="w-full max-w-lg mb-8 hidden bg-gray-900 text-white p-5 rounded-2xl border-r-4 border-yellow-500 flex items-center gap-4 shadow-xl transform hover:scale-[1.01] transition">
-                <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center"><i class="fas fa-bullhorn text-yellow-400"></i></div>
-                <p id="adminMsgText" class="text-sm font-bold leading-relaxed">...</p>
+        <section id="dashboard" class="tab-content page-container w-full h-full flex flex-col items-center justify-center pt-10 flex-grow">
+            <!-- Increased max-w-2xl to max-w-3xl for wider layout on desktop/tablet -->
+            <div id="adminMsgBar" class="w-full max-w-3xl mb-12 hidden bg-gray-900 text-white p-6 rounded-2xl border-r-4 border-yellow-500 flex items-center gap-4 shadow-xl transform transition">
+                <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-bullhorn text-yellow-400 text-xl"></i></div>
+                <p id="adminMsgText" class="text-lg font-bold leading-relaxed">...</p>
             </div>
 
-            <div class="text-center mb-10">
-                <div class="text-gray-400 text-lg font-bold mb-2 tracking-widest" id="liveDate">...</div>
+            <div class="text-center mb-12">
+                <div class="text-gray-400 text-xl font-bold mb-3 tracking-widest" id="liveDate">...</div>
                 <div class="inline-flex items-baseline gap-3 text-black" style="font-family: monospace;">
-                    <span class="text-7xl font-bold tracking-tighter" id="liveClock">00:00:00</span>
-                    <span class="text-2xl font-bold text-gray-300" id="liveAmPm">--</span>
+                    <span class="text-8xl font-bold tracking-tighter" id="liveClock">00:00:00</span>
+                    <span class="text-3xl font-bold text-gray-300" id="liveAmPm">--</span>
                 </div>
             </div>
 
-            <div class="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full max-w-md text-center mb-10">
-                <label class="block text-gray-400 text-xs font-bold mb-4 uppercase tracking-widest">أدخل الكود الوظيفي</label>
+            <!-- Increased max-w-2xl to max-w-3xl -->
+            <div class="bg-white p-12 rounded-[3rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full max-w-3xl text-center mb-12">
+                <label class="block text-gray-400 text-sm font-bold mb-6 uppercase tracking-widest">أدخل الكود الوظيفي</label>
                 <input type="number" id="codeInput" class="attendance-input" placeholder="" autocomplete="off" autofocus>
-                <button onclick="handleAttendance()" class="w-full bg-black text-white py-4 rounded-2xl font-bold mt-8 shadow-xl active:scale-95 transition flex items-center justify-center gap-2 text-lg"><span>تسجيل الحضور</span> <i class="fas fa-fingerprint"></i></button>
+                <button onclick="handleAttendance()" class="w-full bg-black text-white py-5 rounded-2xl font-bold mt-10 shadow-xl active:scale-95 transition flex items-center justify-center gap-3 text-xl"><span>تسجيل الحضور</span> <i class="fas fa-fingerprint text-2xl"></i></button>
             </div>
 
-            <div class="flex gap-4 w-full max-w-md">
-                <div class="flex-1 bg-white p-5 rounded-2xl shadow-sm border-b-4 border-green-500 text-center"><div class="text-4xl font-bold text-gray-900" id="presentCount">٠</div><div class="text-xs text-green-600 font-bold mt-2">حضور حالي</div></div>
-                <div class="flex-1 bg-white p-5 rounded-2xl shadow-sm border-b-4 border-yellow-500 text-center"><div class="text-4xl font-bold text-gray-900" id="breakCount">٠</div><div class="text-xs text-yellow-600 font-bold mt-2">في استراحة</div></div>
+            <!-- Increased max-w-2xl to max-w-3xl -->
+            <div class="flex gap-6 w-full max-w-3xl">
+                <div class="flex-1 bg-white p-6 rounded-3xl shadow-sm border-b-8 border-green-500 text-center"><div class="text-6xl font-bold text-gray-900" id="presentCount">٠</div><div class="text-sm text-green-600 font-bold mt-2">حضور حالي</div></div>
+                <div class="flex-1 bg-white p-6 rounded-3xl shadow-sm border-b-8 border-yellow-500 text-center"><div class="text-6xl font-bold text-gray-900" id="breakCount">٠</div><div class="text-sm text-yellow-600 font-bold mt-2">في استراحة</div></div>
             </div>
         </section>
 
-        <!-- FINANCE -->
-        <section id="finance" class="tab-content hidden page-container w-full max-w-5xl pt-6">
+        <section id="finance" class="tab-content hidden page-container w-full pt-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm mb-6 w-full">
                 <h2 class="text-2xl font-bold mb-8 border-b border-gray-100 pb-4 text-gray-800 flex items-center gap-2">
                     <i class="fas fa-wallet text-gold-500"></i> إدارة الماليات
                 </h2>
-                
-                <!-- Input Section (Top) -->
                 <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <div class="md:col-span-1">
@@ -197,13 +179,13 @@
                         <div class="md:col-span-1">
                             <label class="text-xs font-bold text-gray-400 mb-2 block">نوع العملية</label>
                             <select id="finType" onchange="toggleAmount()" class="std-input bg-white cursor-pointer h-12 mb-0">
-                                <option value="revenue">💰 تسجيل إيراد</option>
-                                <option value="vacation">🏖️ إجازة (رصيد)</option>
-                                <option value="loan">💸 سلفة نقدية</option>
-                                <option value="ded_money">⚠️ خصم مبلغ</option>
-                                <option value="ded_q">⚠️ خصم ربع يوم</option>
-                                <option value="ded_h">⚠️ خصم نص يوم</option>
-                                <option value="ded_f">⛔ غياب يوم كامل</option>
+                                <option value="revenue">تسجيل إيراد</option>
+                                <option value="vacation">إجازة (رصيد)</option>
+                                <option value="loan">سلفة نقدية</option>
+                                <option value="ded_money">خصم مبلغ</option>
+                                <option value="ded_q">خصم ربع يوم</option>
+                                <option value="ded_h">خصم نص يوم</option>
+                                <option value="ded_f">غياب يوم كامل</option>
                             </select>
                         </div>
                         <div class="md:col-span-1">
@@ -217,8 +199,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Table Section (Bottom) -->
                 <div class="border border-gray-100 rounded-2xl overflow-hidden">
                     <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
                         <div class="font-bold text-lg flex items-center gap-2"><i class="fas fa-user-circle"></i> <span id="finName">اختر موظف</span></div>
@@ -241,34 +221,24 @@
             </div>
         </section>
 
-        <!-- MOVEMENTS -->
-        <section id="movements" class="tab-content hidden page-container w-full max-w-7xl pt-6">
+        <section id="movements" class="tab-content hidden page-container w-full pt-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm min-h-[600px] w-full">
-                <!-- Header with Centered Excel Button -->
                 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <h2 class="font-bold text-2xl text-gray-800 w-full md:w-auto text-right">سجل التحركات</h2>
-                    
                     <button onclick="exportMovementsExcel()" class="bg-green-600 text-white px-8 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition flex items-center justify-center gap-2 transform hover:scale-105 md:mx-auto">
                         <i class="fas fa-file-excel text-lg"></i> <span>تصدير Excel</span>
                     </button>
-
                     <div class="flex gap-2 w-full md:w-auto justify-center">
                         <input type="month" id="moveMonth" class="bg-gray-50 border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-black transition">
                         <button onclick="calcMovements()" class="bg-black text-white px-6 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-gray-800">عرض</button>
                     </div>
                 </div>
-
                 <div class="table-responsive rounded-xl border border-gray-100">
                     <table class="w-full text-right bg-white text-sm whitespace-nowrap min-w-full" id="moveTable">
                         <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase">
                             <tr>
-                                <th class="p-4">التاريخ</th>
-                                <th class="p-4">الموظف</th>
-                                <th class="p-4">حضور/انصراف</th>
-                                <th class="p-4 text-yellow-600">بريك</th>
-                                <th class="p-4 text-green-600">صلاة</th>
-                                <th class="p-4 text-blue-600">إذن</th>
-                                <th class="p-4 text-gray-500">فرع آخر</th>
+                                <th class="p-4">التاريخ</th><th class="p-4">الموظف</th><th class="p-4">حضور/انصراف</th>
+                                <th class="p-4 text-yellow-600">بريك</th><th class="p-4 text-green-600">صلاة</th><th class="p-4 text-blue-600">إذن</th><th class="p-4 text-gray-500">فرع آخر</th>
                             </tr>
                         </thead>
                         <tbody id="moveTableBody" class="divide-y divide-gray-50"></tbody>
@@ -277,29 +247,23 @@
             </div>
         </section>
 
-        <!-- REPORTS -->
-        <section id="reports" class="tab-content hidden page-container w-full max-w-7xl pt-6">
+        <section id="reports" class="tab-content hidden page-container w-full pt-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm min-h-[600px] w-full">
-                <!-- Header with Centered Excel Button -->
                 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <h2 class="font-bold text-2xl text-gray-800 w-full md:w-auto text-right">تقرير الرواتب</h2>
-                    
                     <button onclick="exportExcel()" class="bg-green-600 text-white px-8 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition flex items-center justify-center gap-2 transform hover:scale-105 md:mx-auto">
                         <i class="fas fa-file-excel text-lg"></i> <span>تصدير Excel</span>
                     </button>
-
                     <div class="flex gap-2 w-full md:w-auto justify-center">
                         <input type="month" id="reportMonth" class="bg-gray-50 border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-black transition">
                         <button onclick="calcReports()" class="bg-black text-white px-6 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-gray-800">عرض</button>
                     </div>
                 </div>
-
                 <div class="table-responsive rounded-2xl border border-gray-100">
                     <table class="w-full text-right bg-white text-base min-w-[900px]" id="salaryTable">
                         <thead class="bg-gray-900 text-white text-sm font-bold">
                             <tr>
-                                <th class="p-4 whitespace-nowrap">الموظف</th>
-                                <th class="p-4 whitespace-nowrap">الأساسي</th>
+                                <th class="p-4 whitespace-nowrap">الموظف</th><th class="p-4 whitespace-nowrap">الأساسي</th>
                                 <th class="p-4 whitespace-nowrap text-green-400">إضافي وعمولات</th>
                                 <th class="p-4 whitespace-nowrap text-red-300">تأخيرات</th>
                                 <th class="p-4 whitespace-nowrap text-red-300">خصومات/سلف</th>
@@ -312,7 +276,6 @@
             </div>
         </section>
 
-        <!-- EMPLOYEES -->
         <section id="employees" class="tab-content hidden page-container w-full max-w-5xl pt-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm min-h-[600px] w-full">
                 <div class="flex justify-between items-center mb-8"><h2 class="font-bold text-2xl text-gray-800">قائمة الموظفين</h2><button onclick="openEmpModal()" class="bg-black text-white px-6 py-3 rounded-xl font-bold text-xs shadow-lg hover:bg-gray-800 transition flex items-center gap-2"><i class="fas fa-plus"></i> موظف جديد</button></div>
@@ -320,8 +283,7 @@
             </div>
         </section>
 
-        <!-- SETTINGS -->
-        <section id="settings" class="tab-content hidden w-full max-w-xl mx-auto pt-6">
+        <section id="settings" class="tab-content hidden page-container w-full max-w-xl pt-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm mb-4">
                 <h3 class="font-bold border-b border-gray-100 pb-4 mb-4 text-lg">رسالة للموظفين</h3>
                 <textarea id="adminMsgIn" class="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-black transition bg-gray-50" rows="3" placeholder="اكتب التنبيه هنا..."></textarea>
@@ -330,7 +292,6 @@
                     <button onclick="saveMsg()" class="bg-black text-white px-6 py-2 rounded-xl font-bold text-sm flex-grow shadow-md hover:bg-gray-900 transition">نشر الرسالة</button>
                 </div>
             </div>
-            
             <div class="bg-white p-8 rounded-3xl shadow-sm mb-4">
                 <h3 class="font-bold border-b border-gray-100 pb-4 mb-4 text-lg">الأمان والنظام</h3>
                 <div class="space-y-4">
@@ -338,7 +299,6 @@
                     <div><label class="text-xs font-bold text-gray-400">بداية الوردية (نظام 24 ساعة)</label><div class="flex gap-2"><input type="number" id="shiftStartInput" class="std-input mt-1" placeholder="مثال: 13"><button onclick="saveShift()" class="w-1/3 bg-gray-800 text-white rounded-xl text-sm font-bold mt-1">حفظ</button></div></div>
                 </div>
             </div>
-
             <div class="bg-white p-8 rounded-3xl shadow-sm mb-4">
                 <h3 class="font-bold border-b border-gray-100 pb-4 mb-4 text-lg">إدارة البيانات</h3>
                 <div class="grid grid-cols-2 gap-4">
@@ -351,16 +311,14 @@
                     <button onclick="resetSys()" class="text-red-500 font-bold text-xs hover:text-red-700 hover:bg-red-50 px-6 py-3 rounded-xl transition border border-red-100">⚠ حذف جميع البيانات (Factory Reset)</button>
                 </div>
             </div>
-            
-            <!-- Footer -->
-            <footer class="mt-8 py-4 text-center text-xs text-gray-400 font-bold tracking-widest uppercase pb-12">
-                Developed By Mustafa Zuhair
-            </footer>
         </section>
+
+        <footer class="w-full text-center py-6 text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase mt-auto">
+            Developed By Mustafa Zuhair
+        </footer>
 
     </div>
 
-    <!-- LOGIC -->
     <script>
         let adminPIN=localStorage.getItem('sa_pin')||'241120', employees=JSON.parse(localStorage.getItem('sa_emps'))||[], logs=JSON.parse(localStorage.getItem('sa_logs'))||[], finance=JSON.parse(localStorage.getItem('sa_fin'))||[], isLoggedIn=sessionStorage.getItem('sa_session')==='true', editId=null;
         let shiftStart = parseInt(localStorage.getItem('sa_shift')) || 13; 
@@ -384,12 +342,11 @@
             
             if(isLoggedIn)document.getElementById('headerBtn').innerText='القائمة';
             
-            // Fix Message Visibility logic (Direct)
-            const m = localStorage.getItem('sa_msg');
-            if (m) {
+            const m=localStorage.getItem('sa_msg'),e=localStorage.getItem('sa_msg_exp');
+            if(m){
                 document.getElementById('adminMsgBar').classList.remove('hidden');
-                document.getElementById('adminMsgText').innerText = m;
-                document.getElementById('adminMsgIn').value = m;
+                document.getElementById('adminMsgText').innerText=m;
+                document.getElementById('adminMsgIn').value=m;
             }
             
             document.getElementById('shiftStartInput').value = shiftStart;
@@ -411,15 +368,9 @@
         function performLogin(){
             const u=document.getElementById('loginUser').value,p=document.getElementById('loginPass').value;
             if(u==='admin'&&p===adminPIN){
-                isLoggedIn=true;
-                sessionStorage.setItem('sa_session','true');
-                document.getElementById('headerBtn').innerText='القائمة';
-                toggleLogin();
-                showSwal('مرحباً بك', 'success');
-                document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
-            } else {
-                showSwal('بيانات خاطئة', 'error');
-            }
+                isLoggedIn=true; sessionStorage.setItem('sa_session','true'); document.getElementById('headerBtn').innerText='القائمة';
+                toggleLogin(); showSwal('مرحباً بك', 'success'); document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
+            } else { showSwal('بيانات خاطئة', 'error'); }
         }
         function logout(){isLoggedIn=false;sessionStorage.removeItem('sa_session');document.getElementById('headerBtn').innerText='تسجيل دخول';closeSidebar();switchTab('dashboard');showSwal('تم الخروج');}
         function toggleSidebar(){const s=document.getElementById('sidebar'),o=document.getElementById('sidebarOverlay');s.classList.toggle('sidebar-closed');o.classList.toggle('hidden');if(document.body.classList.contains('menu-open')){document.body.classList.remove('menu-open')}else{document.body.classList.add('menu-open');}}
@@ -431,8 +382,11 @@
             let p=0,b=0;
             employees.forEach(e=>{
                 const l=logs.filter(x=>x.eid===e.id).sort((m,n)=>n.ts.localeCompare(m.ts));
-                if(l.length > 0){
-                    if(l[0].act==='in'&&l[0].type==='shift')p++;
+                if(l.length>0){
+                    // FIX: If the last action was *any* 'in' (shift or return from break), they are Present (الحاضرون)
+                    if(l[0].act==='in')p++;
+                    
+                    // If the last action was a temporary 'out' (break or pray), they are On Break (في استراحة)
                     if(l[0].act==='out'&&(l[0].type==='break'||l[0].type==='pray'))b++;
                 }
             });
@@ -445,24 +399,25 @@
             const emp=employees.find(e=>e.code==code);if(!emp){showSwal('كود غير مسجل','error');inp.value='';return;}
             const l=logs.filter(x=>x.eid===emp.id).sort((m,n)=>n.ts.localeCompare(m.ts));
             const last=l[0]; let act='in',type='shift',msg=`أهلاً ${emp.name}`;
-            if(!last||last.act==='out'){if(last&&(last.type==='break'||last.type==='pray'||last.type==='perm'||last.type==='branch')){type=last.type;msg='عودة للعمل';}}
+            
+            if(!last||last.act==='out'){
+                // This is an IN action (Check-in or Return)
+                // act is 'in', type is initialized to 'shift'
+                if(last&&(last.type==='break'||last.type==='pray'||last.type==='perm'||last.type==='branch')){
+                    // This is a return from a temporary exit. We must keep the original temporary type 
+                    // to pair with the 'out' for break calculation, but the message changes.
+                    type=last.type; // Keep the original type (break, pray, perm, branch) for matching
+                    msg='عودة للعمل';
+                }
+            }
             else{
                 act='out';
                 Swal.fire({
                     title: emp.name,
-                    html: `
-                        <div class="grid gap-3 mt-4">
-                            <button onclick="clickAtt('shift')" class="action-btn-gray p-4 rounded-xl font-bold w-full shadow-lg text-lg">انصراف نهائي</button>
-                            <div class="flex gap-2">
-                                <button onclick="clickAtt('break')" class="action-btn-gray p-3 rounded-xl font-bold w-full">بريك</button>
-                                <button onclick="clickAtt('pray')" class="action-btn-gray p-3 rounded-xl font-bold w-full">صلاة</button>
-                            </div>
-                            <button onclick="clickAtt('perm')" class="action-btn-gray p-3 rounded-xl font-bold w-full">إذن</button>
-                            <button onclick="clickAtt('branch')" class="action-btn-gray p-3 rounded-xl font-bold w-full border border-gray-600">الفرع الآخر</button>
-                        </div>
-                    `,
+                    html: `<div class="grid gap-3 mt-4"><button onclick="clickAtt('shift')" class="action-btn-gray p-4 rounded-xl font-bold w-full shadow-lg text-lg">انصراف نهائي</button><div class="flex gap-2"><button onclick="clickAtt('break')" class="action-btn-gray p-3 rounded-xl font-bold w-full">بريك</button><button onclick="clickAtt('pray')" class="action-btn-gray p-3 rounded-xl font-bold w-full">صلاة</button></div><button onclick="clickAtt('perm')" class="action-btn-gray p-3 rounded-xl font-bold w-full">إذن</button><button onclick="clickAtt('branch')" class="action-btn-gray p-3 rounded-xl font-bold w-full border border-gray-600">الفرع الآخر</button></div>`,
                     showConfirmButton: false, showCancelButton: true, cancelButtonText: 'إلغاء', cancelButtonColor: '#4B5563', background: '#000000'
                 });
+                // The global window.clickAtt is used to execute the logging after modal interaction
                 window.clickAtt=(t)=>{type=t;msg=t==='shift'?'تم الانصراف':'تم التسجيل';Swal.close();saveLog(emp,act,type,msg);};inp.value='';return;
             }
             saveLog(emp,act,type,msg);inp.value='';
@@ -584,8 +539,56 @@
         }
         
         function exportExcel(){const ws=XLSX.utils.table_to_sheet(document.getElementById('salaryTable'));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Sheet1");XLSX.writeFile(wb,"Report.xlsx");}
-        function backupData() { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({e:employees,l:logs,f:finance,n:notes})],{type:'application/json'})); a.download='Backup.json'; a.click(); }
-        function restoreData(i) { const r=new FileReader(); r.onload=e=>{const d=JSON.parse(e.target.result); employees=d.e; logs=d.l; finance=d.f; localStorage.setItem('sa_emps',JSON.stringify(employees)); localStorage.setItem('sa_logs',JSON.stringify(logs)); localStorage.setItem('sa_fin',JSON.stringify(finance)); location.reload();}; r.readAsText(i.files[0]); }
+        
+        // Backup function is good
+        function backupData() { 
+            const a=document.createElement('a'); 
+            a.href=URL.createObjectURL(new Blob([JSON.stringify({e:employees,l:logs,f:finance,p:adminPIN,s:shiftStart})],{type:'application/json'})); 
+            a.download='Backup.json'; 
+            a.click(); 
+        }
+
+        // FIX: Restore function enhanced for robustness and correctness
+        function restoreData(i) { 
+            const r = new FileReader();
+            r.onload = e => {
+                try {
+                    const d = JSON.parse(e.target.result);
+                    // Basic validation
+                    if (!d.e || !d.l || !d.f || !d.p) {
+                        showSwal('ملف النسخ الاحتياطي تالف أو غير صالح', 'error');
+                        return;
+                    }
+
+                    // Update global variables
+                    employees = d.e;
+                    logs = d.l;
+                    finance = d.f;
+                    adminPIN = d.p; 
+                    shiftStart = d.s || 13; // Use backup value or default
+
+                    // Save updated data to LocalStorage
+                    localStorage.setItem('sa_emps', JSON.stringify(employees));
+                    localStorage.setItem('sa_logs', JSON.stringify(logs));
+                    localStorage.setItem('sa_fin', JSON.stringify(finance));
+                    localStorage.setItem('sa_pin', adminPIN);
+                    localStorage.setItem('sa_shift', shiftStart);
+
+                    showSwal('تم استعادة البيانات بنجاح. سيتم تحديث الصفحة.', 'success');
+                    setTimeout(() => location.reload(), 1500);
+
+                } catch (error) {
+                    console.error("Restore Error:", error);
+                    showSwal('خطأ في معالجة ملف النسخ الاحتياطي. تأكد أنه ملف JSON صحيح.', 'error');
+                }
+            };
+            // Ensure a file was selected
+            if (i.files.length > 0) {
+                r.readAsText(i.files[0]);
+            } else {
+                showSwal('الرجاء تحديد ملف النسخ الاحتياطي', 'error');
+            }
+        }
     </script>
 </body>
 </html>
